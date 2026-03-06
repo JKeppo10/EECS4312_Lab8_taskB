@@ -84,3 +84,75 @@ def test_capacity_zero_all_waitlisted_and_promotion_never_happens():
 #################################################################################
 # Add your own additional tests here to cover more cases and edge cases as needed.
 #################################################################################
+
+def test_register_when_capacity_available():
+    er = EventRegistration(capacity=3)
+
+    assert er.register("u1") == UserStatus("registered")
+    assert er.register("u2") == UserStatus("registered")
+
+    snap = er.snapshot()
+    assert snap["registered"] == ["u1", "u2"]
+    assert snap["waitlist"] == []
+
+
+def test_register_beyond_capacity_waitlists_users():
+    er = EventRegistration(capacity=2)
+
+    er.register("u1")
+    er.register("u2")
+
+    s3 = er.register("u3")
+
+    assert s3 == UserStatus("waitlisted", 1)
+
+    snap = er.snapshot()
+    assert snap["registered"] == ["u1", "u2"]
+    assert snap["waitlist"] == ["u3"]
+
+
+def test_reregister_after_cancel():
+    er = EventRegistration(capacity=1)
+
+    er.register("u1")
+    er.cancel("u1")
+
+    assert er.register("u1") == UserStatus("registered")
+
+    snap = er.snapshot()
+    assert snap["registered"] == ["u1"]
+    assert snap["waitlist"] == []
+
+
+def test_status_for_unknown_user():
+    er = EventRegistration(capacity=2)
+
+    assert er.status("ghost") == UserStatus("none")
+
+
+def test_waitlist_promotion_fifo_multiple():
+    er = EventRegistration(capacity=1)
+
+    er.register("u1")
+    er.register("u2")
+    er.register("u3")
+
+    er.cancel("u1")
+
+    assert er.status("u2") == UserStatus("registered")
+    assert er.status("u3") == UserStatus("waitlisted", 1)
+
+    er.cancel("u2")
+
+    assert er.status("u3") == UserStatus("registered")
+
+def test_reregister_after_cancel_does_not_raise():
+    er = EventRegistration(capacity=1)
+
+    er.register("u1")
+    er.cancel("u1")
+
+    # should NOT raise DuplicateRequest
+    status = er.register("u1")
+
+    assert status == UserStatus("registered")

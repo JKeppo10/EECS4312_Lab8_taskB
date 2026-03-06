@@ -77,7 +77,7 @@ class EventRegistration:
         """
         # TODO: Initialize internal data structures
 
-        if capacity <= 0:
+        if capacity < 0:
             raise ValueError("Capacity must be greater than zero")
 
         self.capacity = capacity
