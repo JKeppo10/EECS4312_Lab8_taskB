@@ -1,6 +1,560 @@
-## Student Name:
-## Student ID: 
+## Student Name: Joshua Keppo
+## Student ID: 210971752
 
-Prompt #1: {}
-Response #1: {}
+Prompt #1: {
+    Hello I need your help implementing a system in python with the following requirements:
+
+The objective of this system is to manage registration for an event of a fixed capacity in a first come first serve basis while excess registrations are held in a wait list.
+
+Inputs:
+1. Capacity (int): Must be >0 and a single value.
+    ie. sets the capacity for the event.
+2. User ID (str): Must be unique, not null, 12 characters max.
+    ie. gives users an id to be used by the system to track them.
+3. Action (int): 1 ("register"), 2 ("cancel"),  3 ("status")  are the only valid inputs.
+    ie. allows the system to know what action the user wants to take.
+
+Outputs:
+1. Status (str): "registered", "waitlisted", "cancelled", "already_registered", "not_found" are valid outputs.
+   ie. gives the user feedback on their current status for the specific event.
+2. Registered Users (list[str]): the length of which should never exceed the capacity for the event.
+   ie. registering users are added to the event until capacity is reached.
+3. Waitlisted Users (list[str]): no real bounded length (?), follows FIFO principals (i.e. index 0) will be the user promoted in case of a registered users cancellation.
+
+Functions:
+register(user_id) -> returns the status(str) based on the outcome of the method. (whether registered, waitlisted, or already_registered).
+cancel(user_id) -> returns status(str) based on the outcome of the method (whether it cancelled or not_found).
+status(user_id) -> returns status(str) based on the status of the user (registered, waitlisted, not_found).
+
+Functional Requirements:
+1. The system shall accept a positive non-zero fixed capacity value when making an event that defines the maximum number of users for that event.
+2. The system shall allow a user to attempt register for an event.
+3. The system shall successfully register the user if the number of current registered users is below capacity.
+3. The system shall add the user to a registered user list for the event upon successful registration.
+5. The system shall place unsuccessful registrations for the event onto a wait list for it.
+6. The system shall maintain a First-In First-out order to the wait list.
+8. The system shall allow a registered user to cancel their registration.
+9. The system shall allow a wait listed user to cancel their registration.
+12. The system shall promote the earliest wait listed user upon the event registered users going below capacity.
+13. The system shall not allow two or more users to have the same user id.
+14. The system shall not allow for a user to be registered or wait listed multiple times.
+15. The system shall report whether a user is registered, wait listed, or not in the system.
+16. The system shall allow a user that cancelled to register for the event.
+
+Constraints:
+C2. The capacity must be a greater than zero integer. (assumption)
+C3. The number of registered users can never exceed the capacity of the event. (constraint)
+C4. Users must be uniquely identified. (constraint)
+C5. Users are all treated equally. (constraint)
+C7. Users cannot me in multiple states at the same time (cannot be registered and wait listed). (constraint)
+C8. The wait list must be empty if the event capacity is greater than the number of registered users. (constraint)
+C9. Only users can register/cancel for the event (constraint).
+
+Invariants:
+1. The number of registered users must never exceed the capacity at any point.
+2. A user can only exist in one state at a time.
+3. The wait list must preserve the order of arrival of the users.
+
+Acceptance Criteria:
+AC1:
+Given an event with capacity X and X registered users, When a new user attempts to register, Then the user is added to the wait list.
+Linked Constraint: 3
+
+AC2:
+Given an event with capacity Y and Y registered users and a wait list of Z, When a registered user cancels, Then wait list user Z[0] is promoted to the registered users and wait list becomes Z-1.
+Linked Constraint: 8
+
+AC3:
+Given an event with capacity X where registered user A is already registered, When user A attempts to register again, Then the system does not allow this and nothing changes.
+Linked Constraint: 4 and 7
+
+AC4:
+Given an event with capacity X with registered user B, When user B cancels, Then the system removes them from the registered users.
+Linked Constraint: 7
+
+AC5: 
+Given an event with capacity X with registered user C, When another user attempts to register as C, Then the system denies this registration.
+Linked Constraint: 4
+
+AC6:
+Given an event with capacity 0, When attempting to initialize this event, Then the system does not allow for the event to be initialized.
+Linked Constraint: 2
+
+AC7:
+Given an event with capacity 1, When user A and user B attempt register for this event, Then the system shall register the user whose registration is processed first and wait list the other.
+Linked Constraint: 3 and 5
+
+AC8:
+Given an event with capacity X and Y registered users, When a non-user attempts to register for the event, Then the system denies the registration.
+Linked Constraint: 9
+
+AC9:
+Given an event with capacity X and Y registered users, When Y < X, Then the event waitlist is empty.
+Linked Constraint: 8
+
+DO NOT IMPLEMENT ANYTHING YET! I want you to comment if whether any ambiguities or missing clarifications exist from the above.
+
+}
+Response #1: {
+    Your specification is already quite solid 👍 — most functional behavior is clear. However, there **are a few ambiguities, edge cases, and clarifications** that would be helpful before implementing the system. I'll group them by category.
+
+---
+
+# 1. Input Validation Ambiguities
+
+## 1.1 Capacity Initialization Behavior
+
+You specify:
+
+* Capacity must be **> 0**
+* AC6: capacity = 0 → initialization denied.
+
+**Missing clarification**
+
+* What should the system do when capacity is invalid?
+
+Possible behaviors:
+
+* Raise an exception
+* Return an error status
+* Prevent object creation
+
+Example clarification:
+
+> If capacity ≤ 0, the system raises `ValueError`.
+
+---
+
+## 1.2 User ID Format
+
+You state:
+
+* `str`
+* unique
+* not null
+* max length = 12
+
+**Ambiguities**
+
+1. Is **empty string ""** valid?
+2. Are **spaces allowed**?
+3. Are **special characters allowed**?
+4. Should IDs be **case-sensitive**?
+
+Example cases:
+
+```
+"userA"
+"UserA"
+"user a"
+"user@123"
+```
+
+Clarify whether:
+
+```
+"userA" == "UserA"
+```
+
+---
+
+## 1.3 Non-User Registration (AC8)
+
+AC8 says:
+
+> When a non-user attempts to register → deny registration.
+
+But **what defines a non-user?**
+
+Possible interpretations:
+
+* `user_id = None`
+* Non-string
+* Empty string
+* Too long (>12)
+
+Clarify which of these count as **invalid users**.
+
+---
+
+# 2. Waitlist Behavior Ambiguities
+
+## 2.1 Waitlist Capacity
+
+You wrote:
+
+> Waitlisted Users: no real bounded length (?)
+
+This should be clarified.
+
+Typical options:
+
+* **Unbounded**
+* Configurable limit
+* Same limit as capacity
+
+Most systems use:
+
+```
+waitlist = unlimited
+```
+
+---
+
+## 2.2 Promotion Timing
+
+You specify promotion when a registered user cancels.
+
+Ambiguity:
+
+Does promotion happen:
+
+**Option A — immediately inside cancel()**
+
+```
+cancel(A)
+→ remove A
+→ promote waitlist[0]
+```
+
+or
+
+**Option B — lazily later**
+
+Almost certainly **Option A**, but worth explicitly stating.
+
+---
+
+# 3. Status Function Ambiguity
+
+You defined:
+
+```
+status(user_id) → registered | waitlisted | not_found
+```
+
+But **Output spec lists different statuses**:
+
+```
+registered
+waitlisted
+cancelled
+already_registered
+not_found
+```
+
+Ambiguity:
+
+Should `status()` ever return:
+
+```
+cancelled
+already_registered
+```
+
+Most likely:
+
+```
+status() returns only:
+registered
+waitlisted
+not_found
+```
+
+Clarify this.
+
+---
+
+# 4. Duplicate Registration Edge Case
+
+You say:
+
+> system shall not allow user to be registered or waitlisted multiple times
+
+But `register()` output only includes:
+
+```
+already_registered
+```
+
+Ambiguity:
+
+What happens if the user is **already waitlisted**?
+
+Example:
+
+```
+capacity = 1
+register(A) → registered
+register(B) → waitlisted
+register(B) → ?
+```
+
+Possible outputs:
+
+```
+already_registered
+already_waitlisted
+waitlisted (no change)
+```
+
+You should define this.
+
+---
+
+# 5. Cancellation Edge Case
+
+When cancelling a waitlisted user:
+
+Example:
+
+```
+Registered: [A]
+Waitlist: [B, C]
+
+cancel(B)
+```
+
+Questions:
+
+* Does the system return `"cancelled"`? (likely yes)
+* Does promotion happen? (no)
+
+This behavior should be stated explicitly.
+
+---
+
+# 6. Action Input vs Functions
+
+You defined:
+
+```
+Action:
+1 register
+2 cancel
+3 status
+```
+
+But the design also defines **direct functions**:
+
+```
+register()
+cancel()
+status()
+```
+
+Ambiguity:
+
+Is the system:
+
+### Option A — API based
+
+Functions called directly.
+
+### Option B — command processor
+
+```
+process(action, user_id)
+```
+
+Clarify which architecture you want.
+
+---
+
+# 7. System State Query
+
+Outputs include:
+
+```
+Registered Users (list)
+Waitlisted Users (list)
+```
+
+Ambiguity:
+
+Which function returns these?
+
+Options:
+
+* Every operation
+* Separate function
+* Debug only
+
+Example:
+
+```
+get_registered()
+get_waitlist()
+```
+
+---
+
+# 8. Concurrency / First-Come Semantics
+
+You say:
+
+> first come first serve
+
+Ambiguity:
+
+Is the system:
+
+* **single-threaded**
+* **multi-threaded**
+
+If multi-threaded, you need:
+
+* locks
+* atomic operations
+
+If not, you can ignore this.
+
+---
+
+# 9. Cancellation After Promotion Edge Case
+
+Example:
+
+```
+capacity = 1
+
+register(A)
+register(B)
+
+cancel(A)
+```
+
+System promotes B.
+
+Question:
+
+Should B receive status `"registered"` automatically?
+
+(Implementation wise yes, but spec should state this.)
+
+---
+
+# 10. Constraint C8 Enforcement
+
+Constraint:
+
+> waitlist must be empty if capacity > registered users
+
+But there is no **explicit enforcement rule** defined.
+
+Example scenario:
+
+```
+capacity = 5
+registered = [A,B]
+waitlist = [C]
+```
+
+This violates C8.
+
+Question:
+
+Should the system:
+
+* automatically promote C?
+* treat this as invalid state?
+
+Implementation likely:
+
+```
+promotion loop until capacity filled or waitlist empty
+```
+
+But spec should state this.
+
+---
+
+# 11. Maximum System Size
+
+Not required, but missing:
+
+* maximum users?
+* memory expectations?
+
+Probably not needed, but worth noting.
+
+---
+
+# 12. Error Handling Policy
+
+You specify **statuses**, but not **errors**.
+
+Example invalid cases:
+
+```
+register(None)
+register("verylonguserid123")
+register(123)
+cancel("")
+```
+
+Clarify:
+
+Option A — raise exceptions
+Option B — return `"not_found"` or `"invalid"`
+
+Currently `"invalid"` status does not exist.
+
+---
+
+# Summary of Main Clarifications Needed
+
+1️⃣ Invalid capacity behavior
+2️⃣ User ID rules (case sensitivity, characters, empty string)
+3️⃣ Definition of **non-user** (AC8)
+4️⃣ Whether waitlist is **unbounded**
+5️⃣ `status()` allowed return values
+6️⃣ Behavior when **waitlisted user registers again**
+7️⃣ Whether API uses **functions or action codes**
+8️⃣ Which functions return **registered/waitlist lists**
+9️⃣ Whether system assumes **single-threaded execution**
+🔟 Explicit rule for enforcing **Constraint C8**
+
+---
+
+💡 **Overall assessment:**
+Your spec is **about 85–90% implementation-ready**, which is very good for a system design document.
+
+The remaining issues are mostly **edge cases and validation policy**, not core logic.
+
+---
+
+If you'd like, I can also next:
+
+* **Turn this spec into a clean Python class design**
+* **Create a state machine diagram**
+* **Write formal invariants / preconditions**
+* **Design unit tests from your acceptance criteria**
+
+(before we implement the code).
+
+}
+
+I pretty much accept all of it's suggestions. It went into a lot more detail then I was thinking was needed for this lab.
+
+--------------------------------------------------
+
+Prompt #2: {}
+Response #2: {}
+
+--------------------------------------------------
+
+Prompt #3: {}
+Response #3: {}
+
+--------------------------------------------------
+
+Prompt #4: {}
+Response #4: {}
+
+--------------------------------------------------
+
+Prompt #5: {}
+Response #5: {}
+
 --------------------------------------------------

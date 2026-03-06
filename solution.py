@@ -1,5 +1,5 @@
-## Student Name:
-## Student ID:
+## Student Name: Joshua Keppo
+## Student ID: 21091752
 
 """
 Task B: Event Registration with Waitlist (Stub)
@@ -36,6 +36,7 @@ The output consists of the updated registration state and ordered lists of regis
 
 from dataclasses import dataclass
 from typing import List, Optional
+import re
 
 
 class DuplicateRequest(Exception):
@@ -67,13 +68,42 @@ class EventRegistration:
     Deterministic ordering is required (e.g., FIFO waitlist, predictable registration order).
     """
 
+    USER_ID_PATTERN = re.compile(r"^[A-Za-z0-9]{1,12}$")
+
     def __init__(self, capacity: int) -> None:
         """
         Args:
             capacity: maximum number of registered users (>= 0)
         """
         # TODO: Initialize internal data structures
+
+        if capacity <= 0:
+            raise ValueError("Capacity must be greater than zero")
+
+        self.capacity = capacity
+        self._registered: List[str] = []
+        self._waitlist: List[str] = []
+        self._users: set[str] = set()
+
         raise NotImplementedError("EventRegistration.__init__ not implemented yet")
+    
+    def _validate_user_id(self, user_id: str) -> None:
+        if not isinstance(user_id, str):
+            raise ValueError("user_id must be a string")
+
+        if not self.USER_ID_PATTERN.fullmatch(user_id):
+            raise ValueError("Invalid user_id")
+        
+    def _promote(self) -> None:
+        """
+        Promote waitlisted users until capacity is filled or waitlist empty.
+        Ensures invariant C8.
+        """
+        while len(self._registered) < self.capacity and self._waitlist:
+            user = self._waitlist.pop(0)
+            self._registered.append(user)
+
+    
 
     def register(self, user_id: str) -> UserStatus:
         """
@@ -85,6 +115,22 @@ class EventRegistration:
             DuplicateRequest if user already exists (registered or waitlisted)
         """
         # TODO: Implement per lab handout
+
+        self._validate_user_id(user_id)
+
+        if user_id in self._users:
+            raise DuplicateRequest("User already registered or waitlisted")
+
+        self._users.add(user_id)
+
+        if len(self._registered) < self.capacity:
+            self._registered.append(user_id)
+            return UserStatus("registered")
+
+        self._waitlist.append(user_id)
+
+        return UserStatus("waitlisted", len(self._waitlist))
+    
         raise NotImplementedError("register not implemented yet")
 
     def cancel(self, user_id: str) -> None:
@@ -98,6 +144,25 @@ class EventRegistration:
             NotFound (if required by handout)
         """
         # TODO: Implement per lab handout
+
+        self._validate_user_id(user_id)
+
+        if user_id not in self._users:
+            raise NotFound("User not found")
+
+        if user_id in self._registered:
+            self._registered.remove(user_id)
+            self._users.remove(user_id)
+            self._promote()
+            return
+
+        if user_id in self._waitlist:
+            self._waitlist.remove(user_id)
+            self._users.remove(user_id)
+            return
+
+        raise NotFound("User not found")
+    
         raise NotImplementedError("cancel not implemented yet")
 
     def status(self, user_id: str) -> UserStatus:
@@ -108,7 +173,27 @@ class EventRegistration:
           - none
         """
         # TODO: Implement per lab handout
+
+        self._validate_user_id(user_id)
+
+        if user_id in self._registered:
+            return UserStatus("registered")
+
+        if user_id in self._waitlist:
+            pos = self._waitlist.index(user_id) + 1
+            return UserStatus("waitlisted", pos)
+
+        return UserStatus("none")
+    
         raise NotImplementedError("status not implemented yet")
+    
+    def get_registered(self) -> List[str]:
+        """Return copy of registered users."""
+        return list(self._registered)
+
+    def get_waitlist(self) -> List[str]:
+        """Return copy of waitlisted users."""
+        return list(self._waitlist)
 
     def snapshot(self) -> dict:
         """
@@ -116,4 +201,11 @@ class EventRegistration:
         Return a deterministic snapshot of internal state.
         """
         # TODO: Implement if required/allowed
+
+        return {
+            "capacity": self.capacity,
+            "registered": list(self._registered),
+            "waitlist": list(self._waitlist),
+        }
+
         raise NotImplementedError("snapshot not implemented yet")
