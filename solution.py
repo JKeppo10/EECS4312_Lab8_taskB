@@ -147,9 +147,6 @@ class EventRegistration:
 
         self._validate_user_id(user_id)
 
-        if user_id not in self._users:
-            raise NotFound("User not found")
-
         if user_id in self._registered:
             self._registered.remove(user_id)
             self._users.remove(user_id)
@@ -160,6 +157,8 @@ class EventRegistration:
             self._waitlist.remove(user_id)
             self._users.remove(user_id)
             return
+
+        raise NotFound("User not found")
 
         raise NotFound("User not found")
     

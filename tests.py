@@ -156,3 +156,53 @@ def test_reregister_after_cancel_does_not_raise():
     status = er.register("u1")
 
     assert status == UserStatus("registered")
+
+    def test_reregister_after_cancel():
+    er = EventRegistration(capacity=1)
+
+    er.register("u1")
+    er.cancel("u1")
+
+    assert er.register("u1") == UserStatus("registered")
+
+
+def test_status_unknown_user_returns_none():
+    er = EventRegistration(capacity=2)
+
+    assert er.status("ghost") == UserStatus("none")
+
+
+def test_multiple_promotions_fifo_order():
+    er = EventRegistration(capacity=1)
+
+    er.register("u1")
+    er.register("u2")
+    er.register("u3")
+
+    er.cancel("u1")
+
+    assert er.status("u2") == UserStatus("registered")
+    assert er.status("u3") == UserStatus("waitlisted", 1)
+
+    er.cancel("u2")
+
+    assert er.status("u3") == UserStatus("registered")
+
+
+def test_user_not_in_both_lists():
+    er = EventRegistration(capacity=1)
+
+    er.register("u1")
+    er.register("u2")
+
+    registered = set(er.snapshot()["registered"])
+    waitlist = set(er.snapshot()["waitlist"])
+
+    assert registered.isdisjoint(waitlist)
+
+
+def test_invalid_user_id_raises():
+    er = EventRegistration(capacity=2)
+
+    with pytest.raises(ValueError):
+        er.register("invalid_user!")  # special character
