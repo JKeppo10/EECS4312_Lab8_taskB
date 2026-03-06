@@ -157,7 +157,7 @@ def test_reregister_after_cancel_does_not_raise():
 
     assert status == UserStatus("registered")
 
-    def test_reregister_after_cancel():
+def test_reregister_after_cancel():
     er = EventRegistration(capacity=1)
 
     er.register("u1")

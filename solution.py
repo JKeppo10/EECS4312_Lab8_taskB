@@ -84,8 +84,6 @@ class EventRegistration:
         self._registered: List[str] = []
         self._waitlist: List[str] = []
         self._users: set[str] = set()
-
-        raise NotImplementedError("EventRegistration.__init__ not implemented yet")
     
     def _validate_user_id(self, user_id: str) -> None:
         if not isinstance(user_id, str):
@@ -130,8 +128,6 @@ class EventRegistration:
         self._waitlist.append(user_id)
 
         return UserStatus("waitlisted", len(self._waitlist))
-    
-        raise NotImplementedError("register not implemented yet")
 
     def cancel(self, user_id: str) -> None:
         """
@@ -160,10 +156,6 @@ class EventRegistration:
 
         raise NotFound("User not found")
 
-        raise NotFound("User not found")
-    
-        raise NotImplementedError("cancel not implemented yet")
-
     def status(self, user_id: str) -> UserStatus:
         """
         Return status of a user:
@@ -183,8 +175,6 @@ class EventRegistration:
             return UserStatus("waitlisted", pos)
 
         return UserStatus("none")
-    
-        raise NotImplementedError("status not implemented yet")
     
     def get_registered(self) -> List[str]:
         """Return copy of registered users."""
@@ -206,5 +196,3 @@ class EventRegistration:
             "registered": list(self._registered),
             "waitlist": list(self._waitlist),
         }
-
-        raise NotImplementedError("snapshot not implemented yet")
