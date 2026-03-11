@@ -1,0 +1,266 @@
+Prompt 1: [
+    [Persona 1 - Jane Adams (primary user)
+Context: Busy professional managing daily routines and commitments who relies on
+automation to reduce cognitive load. Jane uses digital tools for medication reminders
+and event registrations and expects them to work reliably without manual oversight.
+Behaviors:
+• Acts quickly and rarely revisits system suggestions.
+• Trusts the system to resolve conflicts and enforce rules automatically.
+• Prefers concise outputs and minimal interaction when making decisions.
+Needs
+• Predictable and stable ordering of reminders or system decisions.
+• Automatic handling of conflicts (e.g., reminder collisions or waitlist promotion).
+• Limited notification or information overload
+Pain Points
+• Receiving too many notifications or duplicate system messages.
+• Systems behave inconsistently in similar situations.
+• Having to manually resolve conflicts or check system correctness.
+
+Persona 2 - Mo Rodriguez (edge user)
+Context:  User with accessibility needs & heightened sensitivity to uncertainty. Mo relies on explicit explanations and consistent behavior to build trust in automated systems.
+Behaviors:
+• Carefully reviews outputs and seeks explanations for system decisions.
+• Performs frequent updates (e.g., snoozing reminders or cancelling
+registrations).
+• Experiences stress when outcomes appear arbitrary or unexplained.
+Needs:
+• Deterministic system behavior under ties or conflicting conditions.
+• Clear explanations when reminders are moved, skipped, or when waitlist
+promotions occur.
+• Explicitly handle edge cases instead of silent failure.
+Pain Points:
+• Not understanding why the system changed or rejected an action.
+• Silent failures or dropped reminders/requests.
+• Inconsistent responses across repeated or boundary scenarios.
+
+Based on the above 2 personas we need to come up with constraints for an event registration system. I do not need them to be formal, just ideas, I will formalize them myself. They should cover: reliability expectations, accessibility needs, notification limits, deterministic system behaviour, error handling and edge cases, system transparency and explanations, and other user limitations or expectations.
+]
+Purpose: Initial Brainstorming of Constraints.
+Response summary: Gave many ideas on reliability expectations (flags/prompts for all actions, consistency), accessbility (plain language used, always ahve text labels, etc),
+notification limits (one notification per action, no duplicates, etc.), error handling, and other expectations (automated reminders, timezone edge cases, etc)
+
+-------------------------------------------------------------------------------------------------------
+
+Prompt 2: [
+Okay now is there any new functional requirements that you would add or modify based off the following requirements for the same system:
+
+1. The system shall initialize with a non-negative integer.
+
+2 The system shall upon initializing a new event have no users registered to the event.
+
+3. The system shall uniquely identify each user.
+
+4. The system shall allow for a user to register for the event.
+
+5. The system shall allow for a user to cancel their registration for the event.
+
+6. The system must not allow for a user to register multiple times to the event.
+
+7. The system shall successfully register a user when the capacity for the event is not reached.
+
+8. The system shall unsuccessfully register a user when the capacity for the event is reached.
+
+9. The system shall place a user onto the waitlist when they unsuccessfully register for the event.
+
+10. The system shall treat each user equally.
+
+11. The system shall promote the earliest user entered on the waitilist to the be successfully registered to the event when a registered user cancels if the event was at capacity.
+
+12. The system shall not place any user on the waitlist as long as the event is not at capacity.
+
+13. The system shall allow users to query for their registration status for the event.
+
+14. The system shall allow users to only exist in one state within the system.
+
+15. The system shall handle each request onto completion before handling any other requests.
+
+16. The system shall handle each request in chronological order, if two or more requests are made at the same time then lexicographical order of the users shall be used as the tie breaker.
+
+]
+
+Purpose: More clarification
+Response Summary: Provided many way to modify requiremnts 8, 9, 10, 11, 15 as well as suggested new requirements 17-27 though not all were adopted.
+
+-------------------------------------------------------------------------------------------------------
+
+Prompt 3: [
+For requirements 27, 26, 25, 24, 23, 19. Can you just modify the existing requirements to cover these cases (even though I believe most of them cover these just not explicitly)
+]
+Purpose: Removing/Clarify requirements instead of adding more.
+Response Summary: Gave suggestions on how to modify the existing requirements to remove ambiguities.
+
+-------------------------------------------------------------------------------------------------------
+
+Prompt 3: [
+    Okay provide constraints using the initialize personas and give them in to the following format:
+C1
+Persona: [Jane / Mo]
+Persona attribute: [for example, User expects predictable ordering”] 
+Attribute type: [Behavior/Need/Pain Point]
+Operationalization: [Converted into constraint/ Narrative only]
+Derived Constraint (if converted): [for example, “The system must produce deterministic ordering when reminders share the same timestamp.”]
+
+]
+Purpose: Brainstorming and seeing what attributes it would cover.
+Response Summary:I gave 12 constraints though a few of them were already covered by requirements listed. 9 of them were used.
+
+-------------------------------------------------------------------------------------------------------
+
+Prompt 4: [
+
+I am going to use the following constraints:
+
+C1
+Persona: Jane
+Persona attribute: acts quickly and rarely revisits system suggestions/manually resolve conflicts
+Attribute type: behaviour/pain point
+Operationalization: The system should automatically handle conflicts without manual inputs from users.
+Derived Constraint (if converted): The system must automatically resolve registration and waitlist conflicts without requiring additional user input.
+
+Current support level:
+
+C2
+Persona: Jane
+Persona attribute: concise outputs/minimal interaction
+Attribute type: behaviour
+Operationalization: should minimize unnecessary notifications and messages.
+Derived Constraint (if converted): The system shall only notify users of meaningful state changes; registration confirmation, waitlisted, promotion from waitlist, or cancellation.
+
+Current support level:
+
+C3
+Persona: Jane
+Persona attribute:  Predictable and consistent reminders.
+Attribute type: need
+Operationalization: decisions involving ordering must follow a consistent rule.
+Derived Constraint (if converted): The system shall maintain a deterministic ordering of the registrations and waitlist using predefined rules.
+
+Current support level:
+
+C4
+Persona: Jane
+Persona attribute: information overload.
+Attribute type: need
+Operationalization: multiple messages should not be sent out in a short amount of time or for the same action/request.
+Derived Constraint (if converted): The system shall only send out messages when a state change has happened and only once per 10 minutes. (arbitrary number).
+
+Current support level:
+
+C5
+Persona: Jane
+Persona attribute: inconsistent behaviour
+Attribute type: pain point
+Operationalization: same decisions for same actions.
+Derived Constraint (if converted): The system shall produce consistent outcomes for identical requests when the system state is unchanged.
+
+Current support level:
+
+C6
+Persona: Mo
+Persona attribute: reviews outputs and seeks explanations
+Attribute type: behaviour
+Operationalization: clear explanations of the systems decisions affecting the user.
+Derived Constraint (if converted): The system shall provide a clear explanation when a user is placed on the waitlist, promoted,  or denied registration.
+
+Current support level:
+
+C7
+Persona: Mo
+Persona attribute: performs frequent updates
+Attribute type: behaviour
+Operationalization: repeated actions by users must not cause inconsistent states.
+Derived Constraint (if converted): The system shall maintain a consistent state when a user performs repeated registration or cancellation actions.
+
+Current support level:
+
+C8
+Persona: Mo
+Persona attribute: Deterministic system behaviour
+Attribute type: Need
+Operationalization: Ties must be resolved determistically.
+Derived Constraint (if converted): Already in the constraints.
+
+Current support level:
+
+C9
+
+Persona: Mo
+Persona attribute: clear explanations
+Attribute type: Need
+Operationalization: user should be informed automatically when their state changes and why.
+Derived Constraint (if converted): The system shall provide users with messages when their state changes and explains why.
+
+Current support level:
+C10
+Persona: Mo
+Persona attribute: Not understanding system actions
+Attribute type: pain point
+Operationalization: should inform why an action cannot be taken.
+Derived Constraint (if converted): The system shall return an explaination whenever a registration request cannot be fulfilled.
+
+Current support level:
+
+C11
+
+Persona: Mo
+Persona attribute: silent failures
+Attribute type: pain point
+Operationalization: all user requests should result in a message.
+Derived Constraint (if converted): The system shall return a confirmation or error for every request.
+
+Current support level:
+
+
+Are all of these testable? if so given me acceptance criteria in the following form (each criteria must be verifiable and avoid narrative justification):
+
+AC1:
+Given …
+When …
+Then …
+Linked Constraint ID(s): C#
+
+Each AC must link to at least one Constraint ID.
+
+]
+Purpose: Verifying Testability and Acceptance Critera.
+Response Summary: Confirmed that all the constraints were verifiable even if some would need multiple test cases to do so. AS well as gave a starting point for the acceptance criteria for each.
+
+-------------------------------------------------------------------------------------------------------
+
+Prompt 5: [
+
+List at least 6 edge or boundary cases the system must handle.
+
+For each edge case, write like:
+
+EC1:
+Description:
+Linked Constraint ID(s): C#
+Covered by Acceptance Criteria ID(s): AC#
+
+Add more if you think they are necessary
+
+]
+Purpose: Double checking if I missed any or provided some I had not thought of.
+Response Summary: Gave me 12 edge cases back, but I though a few of them were not really edge cases but basic funcationality.
+-------------------------------------------------------------------------------------------------------
+
+Prompt 6: [
+
+Tie‑Breaking Rules
+
+If multiple valid outcomes exist, explain how the system should deterministically choose one. Follow the below template:
+
+(example)
+Rule ID: TBR1
+Scenario: Two reminders occur at the same timestamp.
+Tie Condition: Both reminders satisfy all scheduling constraints.
+Decision Rule: The system must order reminders alphabetically by medication name.
+
+Provide as many as you see necessary
+
+]
+Purpose: A sanity check because I could only think of 2 that are already defined in the requirements (time and lexicographical order).
+Response Summary: The llm responded with 7 tie breaking rules of which 6 were basically the same scenario with requests having the same timestaps but split between waitlist and registered list. It did provide one I forgot about having to do the frequency of messages.
+
+-------------------------------------------------------------------------------------------------------

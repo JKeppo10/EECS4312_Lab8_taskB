@@ -1,0 +1,191 @@
+##1. Problem Understanding - Describe the problem your system solves.
+
+System purpose: Automatically manage event registrations and waitlists, ensuring users are registered in a fair, deterministic order, and receive timely, clear, and consistent information about their registration status.
+Inputs to the system:
+Outputs produced by the system:
+Primary goal of the system: Automatically manage event registrations and waitlists while providing users with timely, clear, accessible, and consistent information about their registration status.
+
+---
+##2. Assumptions - List assumptions about the environment, users, or inputs.
+
+A1: Users are uniquely identifiable with IDs.
+A2: Event capacity limits are known and enforced by the system.
+A3: Users may register or cancel at any time.
+A4: Multiple users may submit registration requests simultaneously.
+A5: Notifications can be delivered reliably to all users.
+A6: Users expect consistent and deterministic outcomes for identical requests.
+A7: Event capacity may be updated dynamically after event creation.
+A8: Users may have accessibility needs requiring clear, unambiguous messages.
+
+---
+##3. Functional Requirements - Describe the main behaviors the system must perform.
+
+FR1: The system shall initialize the event with a non-negative integer representing the capacity for the event.
+FR2: The system shall, upon initializing a new event, have no users registered to the event.
+FR3: The system shall uniquely identify each user.
+FR4: The system shall allow a user to register for the event.
+FR5: The system shall allow a user to cancel their registration for the event.
+FR6: The system must not allow a user to register multiple times to the event.
+FR7: The system shall successfully register a user when the capacity for the event is not reached.
+FR8: The system shall reject a registration request when the event capacity is reached.
+FR9: The system shall place a user onto the waitlist in the order of when the registration requests are received when the event capacity is reached.
+FR10: The system shall treat users equally by applying the same deterministic rules for registration, cancellation, and waitlist promotion.
+FR11: When a registered user cancels and the event was previously at capacity, the system shall promote the earliest user in the waitlist to register for the event.
+FR12: The system shall not place any user on the waitlist as long as the event is not at capacity.
+FR13: The system shall allow users to query for their registration status for the event.
+FR14: The system shall allow users to exist in only one state within the system.
+FR15: The system shall process requests atomically and complete each request before processing the next request.
+FR16: The system shall handle each request in chronological order; if two or more requests are made at the same time, then lexicographical order of the users shall be used as the tie breaker for both registration and waitlist promotion.
+FR17: The system shall return a message to a user indicating the results of each request they make.
+FR18: The system shall remove a user from the waitlist when they cancel their registration.
+FR19: The system shall ensure that the number of registered users never exceeds the capacity for the event.
+FR20: The system shall promote exactly one user from the waitlist for each newly available registration slot.
+FR21: The system shall define the possible user states as: not registered, registered, waitlisted.
+FR22: The system shall ensure notifications and explanations are formatted clearly and accessibly, suitable for users with accessibility needs.
+FR23: The system shall allow the notification throttling interval to be configurable per event.
+FR24: The system shall handle simultaneous cancellations, registrations, or promotions in a deterministic and atomic manner.
+FR25: The system shall process dynamic capacity changes by promoting waitlisted users up to the new capacity.
+
+---
+##4. System Constraints - Constraints are conditions the system must always respect. Each constraint should reference the persona attribute it originates from.
+
+C1: The system must automatically handle registration and waitlist conflicts without requiring additional user input.
+Derived from persona attribute: Jane – Acts quickly / avoids manually resolving conflicts.
+
+C2: The system shall notify users only of meaningful state changes (registration, waitlist, promotion, cancellation) with minimal interaction.
+Derived from persona attribute: Jane – Concise outputs / minimal interaction.
+
+C3: The system shall maintain deterministic ordering of registrations and waitlist using predefined rules (e.g., earliest registration, lexicographic user ID).
+Derived from persona attribute: Jane – Predictable and consistent ordering.
+
+C4: The system shall limit notifications to at most one per configurable window (default 10 minutes) to prevent information overload.
+Derived from persona attribute: Jane – Information overload.
+
+C5: The system shall produce consistent outcomes for identical requests when the system state is unchanged.
+Derived from persona attribute: Jane – Inconsistent behavior.
+
+C6: The system shall provide clear explanations to users when they are waitlisted, promoted, or denied registration.
+Derived from persona attribute: Mo – Reviews outputs and seeks explanations.
+
+C7: The system shall maintain a consistent state even when users perform frequent register or cancel actions.
+Derived from persona attribute: Mo – Performs frequent updates.
+
+C8: The system shall resolve ties deterministically using predefined ordering rules.
+Derived from persona attribute: Mo – Deterministic system behavior.
+
+C9: The system shall provide messages to users when their state changes and explain why.
+Derived from persona attribute: Mo – Clear explanations of state changes.
+
+C10: The system shall return an explanation whenever a registration request cannot be fulfilled.
+Derived from persona attribute: Mo – Not understanding system actions.
+
+C11: The system shall return a confirmation or error message for every request.
+Derived from persona attribute: Mo – Silent failures.
+
+C12: The system shall handle simultaneous cancellations, registrations, and promotions in a deterministic manner to ensure atomic state transitions.
+Derived from persona attribute: Mo – Deterministic system behavior / consistency.
+
+C13: The system shall ensure all notifications and explanations are formatted accessibly for users with disabilities.
+Derived from persona attribute: Mo – Accessibility / clarity.
+
+---
+##5. Acceptance Criteria - Acceptance criteria define how system behavior will be verified.
+
+AC1: If capacity is reached and a user registers, the system places them on the waitlist automatically.
+AC2: When a registered user cancels and a waitlist exists, the earliest waitlisted user is promoted automatically.
+AC3: Successful registration sends exactly one notification.
+AC4: Waitlist placement sends exactly one notification.
+AC5: Notifications describe the state change.
+AC6: Multiple notifications in a configurable window (default 10 minutes) result in at most one notification unless a state change has occurred.
+AC7: When multiple users submit registration requests simultaneously, the system deterministically orders the requests using lexicographical order of user IDs.
+AC8: Repeated identical registration or cancellation requests produce consistent results.
+AC9: When a registration request cannot be fulfilled, the system responds with a clear explanation.
+AC10: When a user is promoted from the waitlist, the system sends a message indicating the promotion.
+AC11: Users remain in exactly one state at any time, even after repeated registration or cancellation actions.
+AC12: Notifications and explanations follow accessible and clear formatting.
+AC13: When event capacity changes, waitlisted users are promoted deterministically up to the new capacity.
+AC14: Every user request receives a confirmation or error message.
+
+---
+## 6. Edge Cases - Describe unusual or boundary situations the system must handle.
+
+EC1: Multiple users attempt to register simultaneously when only limited slots remain.
+Expected system behavior: System deterministically orders registrations (lexicographically) and fills capacity without conflicts.
+
+EC2: Rapid repeated register or cancel requests from a single user.
+Expected system behavior: User ends up in exactly one valid state; no duplication occurs.
+
+EC3: Multiple notifications triggered in a short period (e.g., <10 minutes).
+Expected system behavior: System limits output to one notification per user within the window unless the state has changed.
+
+EC4: Simultaneous cancellations and registrations.
+Expected system behavior: System deterministically processes actions in chronological order and applies tie-breaking rules consistently for both registration and waitlist promotion.
+
+EC5: Dynamic event capacity changes.
+Expected system behavior: The system promotes waitlisted users automatically up to the new capacity using deterministic ordering.
+
+EC6: Multiple identical requests at the same timestamp from the same user.
+Expected system behavior: System processes requests atomically and ensures the user ends up in exactly one valid state.
+
+---
+## 7. Traceability - Link functional requirements to constraints and acceptance criteria. FR → C → AC mapping
+
+FR1 → The system shall automatically manage event registrations and place users on a waitlist if capacity is reached.
+Derived from constraint C1 (Jane – Acts quickly / avoids manually resolving conflicts).
+Acceptance Criteria: AC1, AC2
+
+FR2 → The system shall promote waitlisted users automatically when registered users cancel.
+Derived from constraint C3 (Jane – Predictable and consistent ordering).
+Acceptance Criteria: AC2, AC7, AC10
+
+FR3 → The system shall produce deterministic ordering of registrations and waitlist promotions when multiple events or state changes occur at the same timestamp.
+Derived from constraint C3 (Jane – Predictable and consistent ordering).
+Acceptance Criteria: AC2, AC7
+
+FR4 → The system shall notify users of meaningful state changes with concise messages that include explanations when necessary.
+Derived from constraint C2 (Jane – Concise outputs / minimal interaction) and C6 (Mo – Reviews outputs and seeks explanations).
+Acceptance Criteria: AC3, AC4, AC5, AC9, AC10, AC12, AC14
+
+FR5 → The system shall ensure repeated registration or cancellation requests leave the user in exactly one valid state.
+Derived from constraint C5 (Jane – Inconsistent behavior) and C7 (Mo – Performs frequent updates).
+Acceptance Criteria: AC8, AC11
+
+FR6 → The system shall limit notifications to at most one per configurable window to avoid overload.
+Derived from constraint C4 (Jane – Information overload).
+Acceptance Criteria: AC6
+
+FR7 → The system shall process simultaneous cancellations, registrations, or promotions deterministically and atomically.
+Derived from constraint C12 (Mo – Deterministic system behavior / consistency).
+Acceptance Criteria: AC4, AC7, AC13
+
+FR8 → The system shall format notifications and explanations clearly and accessibly for users with disabilities.
+Derived from constraint C13 (Mo – Accessibility / clarity).
+Acceptance Criteria: AC12
+
+==========================================================================================================================================
+
+##8. Task 6 - Revision Notes
+Revision Note 1
+Requirement updated: C4 – Notification window
+Reason: Original 10-minute window was arbitrary and rigid.
+Action: Made notification window configurable.
+
+Revision Note 2
+Requirement added: FR22, FR23, FR24, FR25
+Reason: Edge cases for accessibility, simultaneous requests, and dynamic capacity were missing.
+Action: Added functional requirements for accessible notifications, deterministic handling of concurrent requests, and promotion on capacity changes.
+
+Revision Note 3
+Requirement clarified: FR16 / AC7
+Reason: Tie breaking rules were ambiguous for simultaneous requests and promotions.
+Action: Specified lexicographical ordering applies to both registration and waitlist promotion.
+
+Revision Note 4
+Requirement added: EC4, EC5, EC6
+Reason: Edge cases for concurrent actions, dynamic capacity changes, and simultaneous identical requests were missing.
+Action: Added these edge cases with expected deterministic behavior.
+
+Revision Note 5
+Requirement added: C12, C13
+Reason: Constraints for atomic handling of concurrent actions and accessible messaging were missing.
+Action: Added explicit constraints for atomic processing and accessibility.

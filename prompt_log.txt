@@ -1,560 +1,381 @@
 ## Student Name: Joshua Keppo
 ## Student ID: 210971752
 
-Prompt #1: {
-    Hello I need your help implementing a system in python with the following requirements:
+Prompt #1: [
 
-The objective of this system is to manage registration for an event of a fixed capacity in a first come first serve basis while excess registrations are held in a wait list.
+    Hello, I am making a app where the objective of the system is to automatic event registration for an upcoming event. It will organize attendees on a first come first serve basis while placing any overflow of registrations to a wait list that will fill any vacancies on the same basis.
 
-Inputs:
-1. Capacity (int): Must be >0 and a single value.
-    ie. sets the capacity for the event.
-2. User ID (str): Must be unique, not null, 12 characters max.
-    ie. gives users an id to be used by the system to track them.
-3. Action (int): 1 ("register"), 2 ("cancel"),  3 ("status")  are the only valid inputs.
-    ie. allows the system to know what action the user wants to take.
+Here are two personas that the app should serve:
+Persona 1 - Jane Adams (primary user)
+Context: Busy professional managing daily routines and commitments who relies on automation to reduce cognitive load. Jane uses digital tools for medication reminders and event registrations and expects them to work reliably without manual oversight.
+Behaviors:
+• Acts quickly and rarely revisits system suggestions.
+• Trusts the system to resolve conflicts and enforce rules automatically.
+• Prefers concise outputs and minimal interaction when making decisions.
+Needs
+• Predictable and stable ordering of reminders or system decisions.
+• Automatic handling of conflicts (e.g., reminder collisions or waitlist promotion).
+• Limited notification or information overload
+Pain Points
+• Receiving too many notifications or duplicate system messages.
+• Systems behave inconsistently in similar situations.
+• Having to manually resolve conflicts or check system correctness.
 
-Outputs:
-1. Status (str): "registered", "waitlisted", "cancelled", "already_registered", "not_found" are valid outputs.
-   ie. gives the user feedback on their current status for the specific event.
-2. Registered Users (list[str]): the length of which should never exceed the capacity for the event.
-   ie. registering users are added to the event until capacity is reached.
-3. Waitlisted Users (list[str]): no real bounded length (?), follows FIFO principals (i.e. index 0) will be the user promoted in case of a registered users cancellation.
+Persona 2 - Mo Rodriguez (edge user)
+Context:  User with accessibility needs & heightened sensitivity to uncertainty. Mo relies on explicit explanations and consistent behavior to build trust in automated systems.
+Behaviors:
+• Carefully reviews outputs and seeks explanations for system decisions.
+• Performs frequent updates (e.g., snoozing reminders or cancelling
+registrations).
+• Experiences stress when outcomes appear arbitrary or unexplained.
+Needs:
+• Deterministic system behavior under ties or conflicting conditions.
+• Clear explanations when reminders are moved, skipped, or when waitlist
+promotions occur.
+• Explicitly handle edge cases instead of silent failure.
+Pain Points:
+• Not understanding why the system changed or rejected an action.
+• Silent failures or dropped reminders/requests.
+• Inconsistent responses across repeated or boundary scenarios.
 
-Functions:
-register(user_id) -> returns the status(str) based on the outcome of the method. (whether registered, waitlisted, or already_registered).
-cancel(user_id) -> returns status(str) based on the outcome of the method (whether it cancelled or not_found).
-status(user_id) -> returns status(str) based on the status of the user (registered, waitlisted, not_found).
+Here are the currently thought of Constraints derived from them:
+C1
+Persona: Jane
+Persona attribute: acts quickly and rarely revisits system suggestions/manually resolve conflicts
+Attribute type: behaviour/pain point
+Operationalization: The system should automatically handle conflicts without manual inputs from users.
+Derived Constraint (if converted): The system must automatically resolve registration and waitlist conflicts without requiring additional user input.
 
-Functional Requirements:
-1. The system shall accept a positive non-zero fixed capacity value when making an event that defines the maximum number of users for that event.
-2. The system shall allow a user to attempt register for an event.
-3. The system shall successfully register the user if the number of current registered users is below capacity.
-3. The system shall add the user to a registered user list for the event upon successful registration.
-5. The system shall place unsuccessful registrations for the event onto a wait list for it.
-6. The system shall maintain a First-In First-out order to the wait list.
-8. The system shall allow a registered user to cancel their registration.
-9. The system shall allow a wait listed user to cancel their registration.
-12. The system shall promote the earliest wait listed user upon the event registered users going below capacity.
-13. The system shall not allow two or more users to have the same user id.
-14. The system shall not allow for a user to be registered or wait listed multiple times.
-15. The system shall report whether a user is registered, wait listed, or not in the system.
-16. The system shall allow a user that cancelled to register for the event.
+C2
+Persona: Jane
+Persona attribute: concise outputs/minimal interaction
+Attribute type: behaviour
+Operationalization: should minimize unnecessary notifications and messages.
+Derived Constraint (if converted): The system shall only notify users of meaningful state changes; registration confirmation, waitlisted, promotion from waitlist, or cancellation.
 
-Constraints:
-C2. The capacity must be a greater than zero integer. (assumption)
-C3. The number of registered users can never exceed the capacity of the event. (constraint)
-C4. Users must be uniquely identified. (constraint)
-C5. Users are all treated equally. (constraint)
-C7. Users cannot me in multiple states at the same time (cannot be registered and wait listed). (constraint)
-C8. The wait list must be empty if the event capacity is greater than the number of registered users. (constraint)
-C9. Only users can register/cancel for the event (constraint).
+C3
+Persona: Jane
+Persona attribute:  Predictable and consistent reminders.
+Attribute type: need
+Operationalization: decisions involving ordering must follow a consistent rule.
+Derived Constraint (if converted): The system shall maintain a deterministic ordering of the registrations and waitlist using predefined rules.
 
-Invariants:
-1. The number of registered users must never exceed the capacity at any point.
-2. A user can only exist in one state at a time.
-3. The wait list must preserve the order of arrival of the users.
+C4
+Persona: Jane
+Persona attribute: information overload.
+Attribute type: need
+Operationalization: multiple messages should not be sent out in a short amount of time or for the same action/request.
+Derived Constraint (if converted): The system shall only send out messages when a state change has happened and only once per 10 minutes. (arbitrary number).
 
-Acceptance Criteria:
+C5
+Persona: Jane
+Persona attribute: inconsistent behaviour
+Attribute type: pain point
+Operationalization: same decisions for same actions.
+Derived Constraint (if converted): The system shall produce consistent outcomes for identical requests when the system state is unchanged.
+
+C6
+Persona: Mo
+Persona attribute: reviews outputs and seeks explanations
+Attribute type: behaviour
+Operationalization: clear explanations of the systems decisions affecting the user.
+Derived Constraint (if converted): The system shall provide a clear explanation when a user is placed on the waitlist, promoted,  or denied registration.
+
+C7
+Persona: Mo
+Persona attribute: performs frequent updates
+Attribute type: behaviour
+Operationalization: repeated actions by users must not cause inconsistent states.
+Derived Constraint (if converted): The system shall maintain a consistent state when a user performs repeated registration or cancellation actions.
+
+C8
+Persona: Mo
+Persona attribute: Deterministic system behaviour
+Attribute type: Need
+Operationalization: Ties must be resolved determistically.
+Derived Constraint (if converted): Already in the constraints.
+
+C9
+Persona: Mo
+Persona attribute: clear explanations
+Attribute type: Need
+Operationalization: user should be informed automatically when their state changes and why.
+Derived Constraint (if converted): The system shall provide users with messages when their state changes and explains why.
+
+C10
+Persona: Mo
+Persona attribute: Not understanding system actions
+Attribute type: pain point
+Operationalization: should inform why an action cannot be taken.
+Derived Constraint (if converted): The system shall return an explaination whenever a registration request cannot be fulfilled.
+
+C11
+Persona: Mo
+Persona attribute: silent failures
+Attribute type: pain point
+Operationalization: all user requests should result in a message.
+Derived Constraint (if converted): The system shall return a confirmation or error for every request.
+
+And Here are the currently though of acceptance criteria:
 AC1:
-Given an event with capacity X and X registered users, When a new user attempts to register, Then the user is added to the wait list.
-Linked Constraint: 3
+Given an event that has reached its maximum capacity
+When a new user submits a registration request
+Then the system places the user on the waitlist automatically without requiring additional input
+Linked Constraint ID(s): C1
 
 AC2:
-Given an event with capacity Y and Y registered users and a wait list of Z, When a registered user cancels, Then wait list user Z[0] is promoted to the registered users and wait list becomes Z-1.
-Linked Constraint: 8
+Given a registered user cancels their registration while the event has a non-empty waitlist
+When the cancellation requested is processed
+Then the system automatically promotes the earliest waitlisted user to the registered status
+Linked Constraint ID(s): C1, C3
 
 AC3:
-Given an event with capacity X where registered user A is already registered, When user A attempts to register again, Then the system does not allow this and nothing changes.
-Linked Constraint: 4 and 7
+Given a user submits a registration request for an event with available capacity 
+When the request is processed
+Then the system sends exactly one notification confirming the registration to the user
+Linked Constraint ID(s): C2
 
 AC4:
-Given an event with capacity X with registered user B, When user B cancels, Then the system removes them from the registered users.
-Linked Constraint: 7
+Given a user is placed on the waitlist for the event
+When the waitlist placement happens
+Then the system sends exactly one notification to the user informing them that they were waitlisted.
+Linked Constraint ID(s): C2
 
-AC5: 
-Given an event with capacity X with registered user C, When another user attempts to register as C, Then the system denies this registration.
-Linked Constraint: 4
+AC5:
+Given a user receives a notification about a state change
+When the system generates the notification
+Then the notification describes the state change as one of the following: registered, waitlisted, promoted, or cancelled.
+Linked Constraint ID(s): C2
 
 AC6:
-Given an event with capacity 0, When attempting to initialize this event, Then the system does not allow for the event to be initialized.
-Linked Constraint: 2
+Given multiple notifications are triggered by the system within 10 minute window for the same user
+When the notifications are generated
+Then the system sends at most one notification in that 10 minute window
+Linked Constraint ID(s): C4
 
 AC7:
-Given an event with capacity 1, When user A and user B attempt register for this event, Then the system shall register the user whose registration is processed first and wait list the other.
-Linked Constraint: 3 and 5
+Given two users submit registration requests at the same time
+When the system processes the requests
+Then the system orders the requests using lexicographical order of the users id.
+Linked Constraint ID(s): C3, C8
 
 AC8:
-Given an event with capacity X and Y registered users, When a non-user attempts to register for the event, Then the system denies the registration.
-Linked Constraint: 9
+Given the system receives two or more of the same request while the system state remains unchanged
+When the requests are processed
+Then the system produces the same output for each request
+Linked Constraint ID(s): C5
 
 AC9:
-Given an event with capacity X and Y registered users, When Y < X, Then the event waitlist is empty.
-Linked Constraint: 8
+Given an event has reached capacity
+When a user attempts to register to the event
+Then the system responds with a message explaining that the registration failed because the event was full and that they were waitlisted
+Linked Constraint ID(s): C6, C10
 
-DO NOT IMPLEMENT ANYTHING YET! I want you to comment if whether any ambiguities or missing clarifications exist from the above.
+AC10:
+Given a user is promoted (from the waitlist)
+When the promotion occurs
+Then the system responds with a message indicating the promotion.
+Linked Constraint ID(s): C6, C9
 
-}
-Response #1: {
-    Your specification is already quite solid 👍 — most functional behavior is clear. However, there **are a few ambiguities, edge cases, and clarifications** that would be helpful before implementing the system. I'll group them by category.
+AC11:
+Given a user repeatedly submits a registration and cancellation requests
+When the requests are processed
+Then the user remains in exactly one state at any time.
+Linked Constraint ID(s): C7
 
+AC12:
+Given a user submits a registration request that cannot be fulfilled
+When request is processed
+Then the system responds with a message that explains why the registration was rejected.
+Linked Constraint ID(s): C10
+
+AC13:
+Given a user submits any request to the system
+When the request is processed
+Then the system responds with a message or error.
+Linked Constraint ID(s): C11
+
+AC14:
+Given a user cancels their registration
+When the request is processed
+Then the system responds with a message indicating the user has cancelled successfully.
+Linked Constraint ID(s): C2, C11
+
+I would like you review this information and provide any feedback on it currently. DO NOT DO ANY IMPLEMENTATION OF CODE AT THE MOMENT.
+
+]
+Response #1: [Gave a decent amount of feedback on the constraints, noting C3 and C8 could explicitly state that it allplies to registered list and the wait list.
+Also noted that C6 and C9 should explicit state the type of message, an email, in-system message, etc. Notified of a potentially missing edge case as well.  ]
+Decision: [Accepted]
+--------------------------------------------------
+
+Prompt #2: [
+
+##I did not save the functional requirements I made for Lab8 anywhere else so I did not have access to them to directly use for this lab.
+
+Outputs produced by the system:
+Primary goal of the system: Automatically manage event registrations and waitlists while providing users with timely, clear, and consistent information about their registration status.
 ---
-
-# 1. Input Validation Ambiguities
-
-## 1.1 Capacity Initialization Behavior
-
-You specify:
-
-* Capacity must be **> 0**
-* AC6: capacity = 0 → initialization denied.
-
-**Missing clarification**
-
-* What should the system do when capacity is invalid?
-
-Possible behaviors:
-
-* Raise an exception
-* Return an error status
-* Prevent object creation
-
-Example clarification:
-
-> If capacity ≤ 0, the system raises `ValueError`.
-
+## 2. Assumptions - List assumptions about the environment, users, or inputs.
+A1: Users are uniquely identifiable with IDs.
+A2: Event capacity limits are known and enforced by the system.
+A3: Users may register or cancel at any time.
+A4: Multiple users may submit registration requests simultaneously.
+A5: Notifications can be delivered reliably to all users.
+A6: Users expect consistent and deterministic outcomes for identical requests.
 ---
-
-## 1.2 User ID Format
-
-You state:
-
-* `str`
-* unique
-* not null
-* max length = 12
-
-**Ambiguities**
-
-1. Is **empty string ""** valid?
-2. Are **spaces allowed**?
-3. Are **special characters allowed**?
-4. Should IDs be **case-sensitive**?
-
-Example cases:
-
-```
-"userA"
-"UserA"
-"user a"
-"user@123"
-```
-
-Clarify whether:
-
-```
-"userA" == "UserA"
-```
-
+## 3. Functional Requirements - Describe the main behaviors the system must perform.
+FR1: The system shall initialize the event with a non-negative integer representing the capacity for the event.
+FR2: The system shall, upon initializing a new event, have no users registered to the event.
+FR3: The system shall uniquely identify each user.
+FR4: The system shall allow for a user to register for the event.
+FR5: The system shall allow for a user to cancel their registration for the event.
+FR6: The system must not allow for a user to register multiple times to the event.
+FR7: The system shall successfully register a user when the capacity for the event is not reached.
+FR8: The system shall reject a registration request when the event capacity is reached.
+FR9: The system shall place a user onto the waitlist in the order of when the registration requests are received when the event capacity is reached.
+FR10: The system shall treat users equally by applying the same deterministic rules for registration, cancellation, and waitlist promotion.
+FR11: When a registered user cancels and the event was previously at capacity, the system shall promote the earliest user in the waitlist to register for the event.
+FR12: The system shall not place any user on the waitlist as long as the event is not at capacity.
+FR13: The system shall allow users to query for their registration status for the event.
+FR14: The system shall allow users to exist in only one state within the system.
+FR15: The system shall process requests atomically and complete each request before processing the next request.
+FR16: The system shall handle each request in chronological order; if two or more requests are made at the same time, then lexicographical order of the users shall be used as the tie breaker.
+FR17: The system shall return a message to a user indicating the results of each request they make.
+FR18: The system shall remove a user from the waitlist when they cancel their registration.
+FR19: The system shall ensure that the number of registered users never exceeds the capacity for the event.
+FR20: The system shall promote exactly one user from the waitlist for each newly available registration slot.
+FR21: The system shall define the possible user states as: not registered, registered, waitlisted.
 ---
+## 4. System Constraints - Constraints are conditions the system must always respect. Each constraint should reference the persona attribute it originates from.
+C1: The system must automatically handle registration and waitlist conflicts without requiring additional user input.
+Derived from persona attribute: Jane – Acts quickly / avoids manually resolving conflicts.
 
-## 1.3 Non-User Registration (AC8)
+C2: The system shall notify users only of meaningful state changes (registration, waitlist, promotion, cancellation) with minimal interaction.
+Derived from persona attribute: Jane – Concise outputs / minimal interaction.
 
-AC8 says:
+C3: The system shall maintain deterministic ordering of registrations and waitlist using predefined rules (e.g., earliest registration, lexicographic user ID).
+Derived from persona attribute: Jane – Predictable and consistent ordering.
 
-> When a non-user attempts to register → deny registration.
+C4: The system shall limit notifications to at most one per 10-minute window to prevent information overload.
+Derived from persona attribute: Jane – Information overload.
 
-But **what defines a non-user?**
+C5: The system shall produce consistent outcomes for identical requests when the system state is unchanged.
+Derived from persona attribute: Jane – Inconsistent behavior.
 
-Possible interpretations:
+C6: The system shall provide clear explanations to users when they are waitlisted, promoted, or denied registration.
+Derived from persona attribute: Mo – Reviews outputs and seeks explanations.
 
-* `user_id = None`
-* Non-string
-* Empty string
-* Too long (>12)
+C7: The system shall maintain a consistent state even when users perform frequent register or cancel actions.
+Derived from persona attribute: Mo – Performs frequent updates.
 
-Clarify which of these count as **invalid users**.
+C8: The system shall resolve ties deterministically using predefined ordering rules.
+Derived from persona attribute: Mo – Deterministic system behavior.
 
+C9: The system shall provide messages to users when their state changes and explain why.
+Derived from persona attribute: Mo – Clear explanations of state changes.
+
+C10: The system shall return an explanation whenever a registration request cannot be fulfilled.
+Derived from persona attribute: Mo – Not understanding system actions.
+
+C11: The system shall return a confirmation or error message for every request.
+Derived from persona attribute: Mo – Silent failures.
 ---
-
-# 2. Waitlist Behavior Ambiguities
-
-## 2.1 Waitlist Capacity
-
-You wrote:
-
-> Waitlisted Users: no real bounded length (?)
-
-This should be clarified.
-
-Typical options:
-
-* **Unbounded**
-* Configurable limit
-* Same limit as capacity
-
-Most systems use:
-
-```
-waitlist = unlimited
-```
-
+## 5. Acceptance Criteria - Acceptance criteria define how system behavior will be verified.
+AC1: If capacity is reached and a user registers, the system places them on the waitlist automatically.
+AC2: When a registered user cancels and a waitlist exists, the earliest waitlisted user is promoted automatically.
+AC3: Successful registration sends exactly one notification.
+AC4: Waitlist placement sends exactly one notification.
+AC5: Notifications describe the state change.
+AC6: Multiple notifications in a 10 minute window result in at most one notification unless a state change has occurred.
 ---
+## 6. Edge Cases - Describe unusual or boundary situations the system must handle.
+EC1: Multiple users attempt to register simultaneously when only limited slots remain.
+Expected system behavior: System deterministically orders registrations (lexicographically) and fills capacity without conflicts.
 
-## 2.2 Promotion Timing
+EC2: Rapid repeated register or cancel requests from a single user.
+Expected system behavior: User ends up in exactly one valid state, no duplication occurs.
 
-You specify promotion when a registered user cancels.
-
-Ambiguity:
-
-Does promotion happen:
-
-**Option A — immediately inside cancel()**
-
-```
-cancel(A)
-→ remove A
-→ promote waitlist[0]
-```
-
-or
-
-**Option B — lazily later**
-
-Almost certainly **Option A**, but worth explicitly stating.
-
+EC3: Multiple notifications triggered in a short period (e.g., <10 minutes).
+Expected system behavior: System limits output to one notification per user within the 10-minute window.
 ---
-
-# 3. Status Function Ambiguity
-
-You defined:
-
-```
-status(user_id) → registered | waitlisted | not_found
-```
-
-But **Output spec lists different statuses**:
-
-```
-registered
-waitlisted
-cancelled
-already_registered
-not_found
-```
-
-Ambiguity:
-
-Should `status()` ever return:
-
-```
-cancelled
-already_registered
-```
-
-Most likely:
-
-```
-status() returns only:
-registered
-waitlisted
-not_found
-```
-
-Clarify this.
-
----
-
-# 4. Duplicate Registration Edge Case
-
-You say:
-
-> system shall not allow user to be registered or waitlisted multiple times
-
-But `register()` output only includes:
-
-```
-already_registered
-```
-
-Ambiguity:
-
-What happens if the user is **already waitlisted**?
-
-Example:
-
-```
-capacity = 1
-register(A) → registered
-register(B) → waitlisted
-register(B) → ?
-```
-
-Possible outputs:
-
-```
-already_registered
-already_waitlisted
-waitlisted (no change)
-```
-
-You should define this.
-
----
-
-# 5. Cancellation Edge Case
-
-When cancelling a waitlisted user:
-
-Example:
-
-```
-Registered: [A]
-Waitlist: [B, C]
-
-cancel(B)
-```
-
-Questions:
-
-* Does the system return `"cancelled"`? (likely yes)
-* Does promotion happen? (no)
-
-This behavior should be stated explicitly.
-
----
-
-# 6. Action Input vs Functions
-
-You defined:
-
-```
-Action:
-1 register
-2 cancel
-3 status
-```
-
-But the design also defines **direct functions**:
-
-```
-register()
-cancel()
-status()
-```
-
-Ambiguity:
-
-Is the system:
-
-### Option A — API based
-
-Functions called directly.
-
-### Option B — command processor
-
-```
-process(action, user_id)
-```
-
-Clarify which architecture you want.
-
----
-
-# 7. System State Query
-
-Outputs include:
-
-```
-Registered Users (list)
-Waitlisted Users (list)
-```
-
-Ambiguity:
-
-Which function returns these?
-
-Options:
-
-* Every operation
-* Separate function
-* Debug only
-
-Example:
-
-```
-get_registered()
-get_waitlist()
-```
-
----
-
-# 8. Concurrency / First-Come Semantics
-
-You say:
-
-> first come first serve
-
-Ambiguity:
-
-Is the system:
-
-* **single-threaded**
-* **multi-threaded**
-
-If multi-threaded, you need:
-
-* locks
-* atomic operations
-
-If not, you can ignore this.
-
----
-
-# 9. Cancellation After Promotion Edge Case
-
-Example:
-
-```
-capacity = 1
-
-register(A)
-register(B)
-
-cancel(A)
-```
-
-System promotes B.
-
-Question:
-
-Should B receive status `"registered"` automatically?
-
-(Implementation wise yes, but spec should state this.)
-
----
-
-# 10. Constraint C8 Enforcement
-
-Constraint:
-
-> waitlist must be empty if capacity > registered users
-
-But there is no **explicit enforcement rule** defined.
-
-Example scenario:
-
-```
-capacity = 5
-registered = [A,B]
-waitlist = [C]
-```
-
-This violates C8.
-
-Question:
-
-Should the system:
-
-* automatically promote C?
-* treat this as invalid state?
-
-Implementation likely:
-
-```
-promotion loop until capacity filled or waitlist empty
-```
-
-But spec should state this.
-
----
-
-# 11. Maximum System Size
-
-Not required, but missing:
-
-* maximum users?
-* memory expectations?
-
-Probably not needed, but worth noting.
-
----
-
-# 12. Error Handling Policy
-
-You specify **statuses**, but not **errors**.
-
-Example invalid cases:
-
-```
-register(None)
-register("verylonguserid123")
-register(123)
-cancel("")
-```
-
-Clarify:
-
-Option A — raise exceptions
-Option B — return `"not_found"` or `"invalid"`
-
-Currently `"invalid"` status does not exist.
-
----
-
-# Summary of Main Clarifications Needed
-
-1️⃣ Invalid capacity behavior
-2️⃣ User ID rules (case sensitivity, characters, empty string)
-3️⃣ Definition of **non-user** (AC8)
-4️⃣ Whether waitlist is **unbounded**
-5️⃣ `status()` allowed return values
-6️⃣ Behavior when **waitlisted user registers again**
-7️⃣ Whether API uses **functions or action codes**
-8️⃣ Which functions return **registered/waitlist lists**
-9️⃣ Whether system assumes **single-threaded execution**
-🔟 Explicit rule for enforcing **Constraint C8**
-
----
-
-💡 **Overall assessment:**
-Your spec is **about 85–90% implementation-ready**, which is very good for a system design document.
-
-The remaining issues are mostly **edge cases and validation policy**, not core logic.
-
----
-
-If you'd like, I can also next:
-
-* **Turn this spec into a clean Python class design**
-* **Create a state machine diagram**
-* **Write formal invariants / preconditions**
-* **Design unit tests from your acceptance criteria**
-
-(before we implement the code).
-
-}
-
-I pretty much accept all of it's suggestions. It went into a lot more detail then I was thinking was needed for this lab.
+## 7. Traceability - Link functional requirements to constraints and acceptance criteria. FR → C → AC mapping
+FR1 → The system shall automatically manage event registrations and place users on a waitlist if capacity is reached.
+Derived from constraint C1 (Jane – Acts quickly / avoids manually resolving conflicts).
+Acceptance Criteria: AC1, AC2
+
+FR2 → The system shall promote waitlisted users automatically when registered users cancel.
+Derived from constraint C3 (Jane – Predictable and consistent ordering).
+Acceptance Criteria: AC2, AC7, AC10
+
+FR3 → The system shall produce deterministic ordering of reminders and waitlist promotions when multiple events or state changes occur at the same timestamp.
+Derived from constraint C3 (Jane – Predictable and consistent ordering).
+Acceptance Criteria: AC2, AC7
+
+FR4 → The system shall notify users of meaningful state changes with concise messages that include explanations when necessary.
+Derived from constraint C2 (Jane – Concise outputs / minimal interaction) and C6 (Mo – Reviews outputs and seeks explanations).
+Acceptance Criteria: AC3, AC4, AC5, AC9, AC10, AC12, AC14
+
+FR5 → The system shall ensure repeated registration or cancellation requests leave the user in exactly one valid state.
+Derived from constraint C5 (Jane – Inconsistent behavior) and C7 (Mo – Performs frequent updates).
+Acceptance Criteria: AC8, AC11
+
+FR6 → The system shall limit notifications to at most one per 10-minute window to avoid overload.
+Derived from constraint C4 (Jane – Information overload).
+Acceptance Criteria: AC6
+
+Okay the above is the full requirements document so far. Do you see any missing constraints, ambiguous requirements, unhandled edge cases, or anything else missing?
+
+]
+Response #2: [Provided feedback that there is no specific constraint of if a request comes in while another request is being handled. Provided a suggestion the Message style that it was itself ambiguous. 
+Noted C4 being arbitrary, but I need to set some sort of number. Feedback on FR15 to explicit state concurrent events. FR16 should state the it applies everywhere.
+  FR13 to clarify possible notification spamming. FR18 for clarifying a possible gap plus a bunch more....]
+Decision: [Modify]
 
 --------------------------------------------------
 
-Prompt #2: {}
-Response #2: {}
+Prompt #3: [
+
+
+
+]
+Response #2: []
+Decision: []
 
 --------------------------------------------------
 
-Prompt #3: {}
-Response #3: {}
+Prompt #2: []
+Response #2: []
+Decision: []
 
 --------------------------------------------------
 
-Prompt #4: {}
-Response #4: {}
+Prompt #2: []
+Response #2: []
+Decision: []
 
 --------------------------------------------------
 
-Prompt #5: {}
-Response #5: {}
+Prompt #1: []
+Response #2: []
+Decision: []
+
+--------------------------------------------------
+
+Prompt #2: []
+Response #2: []
+Decision: []
+
+--------------------------------------------------
+
+Prompt #2: []
+Response #2: []
+Decision: []
+
+--------------------------------------------------
+
+Prompt #2: []
+Response #2: []
+Decision: []
 
 --------------------------------------------------
